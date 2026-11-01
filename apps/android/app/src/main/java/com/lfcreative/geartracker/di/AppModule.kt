@@ -3,6 +3,10 @@ package com.lfcreative.geartracker.di
 import android.content.Context
 import androidx.room.Room
 import com.lfcreative.geartracker.BuildConfig
+import com.lfcreative.geartracker.asset.AssetApi
+import com.lfcreative.geartracker.asset.SupabaseAssetApi
+import com.lfcreative.geartracker.asset.create.PrefsWizardMemory
+import com.lfcreative.geartracker.asset.create.WizardMemory
 import com.lfcreative.geartracker.data.auth.AuthRepository
 import com.lfcreative.geartracker.data.auth.PrefsSessionManager
 import com.lfcreative.geartracker.data.auth.SupabaseAuthRepository
@@ -69,4 +73,6 @@ abstract class BindingsModule {
     @Binds abstract fun eventOutbox(impl: OutboxRepository): EventOutbox
     @Binds abstract fun feedbackSink(impl: FeedbackPlayer): FeedbackSink
     @Binds abstract fun sessionSettings(impl: SettingsRepository): SessionSettings
+    @Binds abstract fun assetApi(impl: SupabaseAssetApi): AssetApi
+    @Binds abstract fun wizardMemory(impl: PrefsWizardMemory): WizardMemory
 }

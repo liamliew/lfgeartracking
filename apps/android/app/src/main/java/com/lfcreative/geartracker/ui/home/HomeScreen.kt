@@ -46,11 +46,16 @@ private val Tiles = listOf(
     Tile("Check Out", "Send gear out", Icons.AutoMirrored.Filled.ExitToApp),
     Tile("Update", "Mark last seen", Icons.Default.LocationOn),
     Tile("Audit", "Count a location", Icons.Default.Search),
-    Tile("New Asset", "Add gear", Icons.Default.Add),
+    Tile("New Asset", "Add gear", Icons.Default.Add, enabled = true),
 )
 
 @Composable
-fun HomeScreen(onOpenSettings: () -> Unit, onOpenPackMove: () -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(
+    onOpenSettings: () -> Unit,
+    onOpenPackMove: () -> Unit,
+    onOpenCreate: () -> Unit,
+    onOpenSearch: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier
@@ -85,10 +90,18 @@ fun HomeScreen(onOpenSettings: () -> Unit, onOpenPackMove: () -> Unit, viewModel
             modifier = Modifier.heightIn(min = MinTouch),
         )
 
+        // Search / scan: opens Search, where a scan jumps straight to the asset.
+        Card(onClick = onOpenSearch, modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp)) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Default.Search, contentDescription = null)
+                Text("Search or scan an asset", fontSize = 20.sp)
+            }
+        }
+
         // Two columns of large tiles. Sessions are enabled as their milestones land.
         Tiles.chunked(2).forEach { pair ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                pair.forEach { tile -> TileCard(tile, onClick = onOpenPackMove.takeIf { tile.title == "Pack / Move" } ?: {}, Modifier.weight(1f)) }
+                pair.forEach { tile -> TileCard(tile, onClick = when (tile.title) { "Pack / Move" -> onOpenPackMove; "New Asset" -> onOpenCreate; else -> ({}) }, Modifier.weight(1f)) }
             }
         }
 

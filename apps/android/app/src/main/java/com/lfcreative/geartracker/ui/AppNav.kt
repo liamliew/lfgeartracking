@@ -21,7 +21,12 @@ import androidx.navigation.compose.rememberNavController
 import com.lfcreative.geartracker.data.auth.AuthState
 import com.lfcreative.geartracker.ui.home.HomeScreen
 import com.lfcreative.geartracker.ui.login.LoginScreen
+import com.lfcreative.geartracker.ui.asset.AssetDetailScreen
+import com.lfcreative.geartracker.ui.asset.CreateAssetScreen
+import com.lfcreative.geartracker.ui.search.SearchScreen
 import com.lfcreative.geartracker.ui.session.PackMoveScreen
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.lfcreative.geartracker.ui.settings.SettingsScreen
 
 object Routes {
@@ -29,6 +34,10 @@ object Routes {
     const val HOME = "home"
     const val SETTINGS = "settings"
     const val PACK_MOVE = "pack_move"
+    const val CREATE = "create"
+    const val SEARCH = "search"
+    const val ASSET = "asset/{id}"
+    fun asset(id: String) = "asset/$id"
 }
 
 @Composable
@@ -58,9 +67,27 @@ fun AppNav(viewModel: MainViewModel = hiltViewModel()) {
                 HomeScreen(
                     onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                     onOpenPackMove = { navController.navigate(Routes.PACK_MOVE) },
+                    onOpenCreate = { navController.navigate(Routes.CREATE) },
+                    onOpenSearch = { navController.navigate(Routes.SEARCH) },
                 )
             }
             composable(Routes.PACK_MOVE) { PackMoveScreen(onBack = { navController.popBackStack() }) }
+            composable(Routes.CREATE) {
+                CreateAssetScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenAsset = { id -> navController.navigate(Routes.asset(id)) { popUpTo(Routes.CREATE) { inclusive = true } } },
+                )
+            }
+            composable(Routes.SEARCH) {
+                SearchScreen(
+                    onBack = { navController.popBackStack() },
+                    onOpenAsset = { id -> navController.navigate(Routes.asset(id)) },
+                    submitScan = viewModel::submitScan,
+                )
+            }
+            composable(Routes.ASSET, arguments = listOf(navArgument("id") { type = NavType.StringType })) {
+                AssetDetailScreen(onBack = { navController.popBackStack() }, submitScan = viewModel::submitScan)
+            }
             composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
         }
         if (BuildConfig.DEBUG) {
