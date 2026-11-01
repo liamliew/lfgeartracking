@@ -38,10 +38,10 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lfcreative.geartracker.ui.theme.MinTouch
 
-private data class Tile(val title: String, val subtitle: String, val icon: ImageVector)
+private data class Tile(val title: String, val subtitle: String, val icon: ImageVector, val enabled: Boolean = false)
 
 private val Tiles = listOf(
-    Tile("Pack / Move", "Containers and storage", Icons.Default.ShoppingCart),
+    Tile("Pack / Move", "Containers and storage", Icons.Default.ShoppingCart, enabled = true),
     Tile("Check In", "Return gear", Icons.Default.CheckCircle),
     Tile("Check Out", "Send gear out", Icons.AutoMirrored.Filled.ExitToApp),
     Tile("Update", "Mark last seen", Icons.Default.LocationOn),
@@ -50,7 +50,7 @@ private val Tiles = listOf(
 )
 
 @Composable
-fun HomeScreen(onOpenSettings: () -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
+fun HomeScreen(onOpenSettings: () -> Unit, onOpenPackMove: () -> Unit, viewModel: HomeViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier
@@ -88,7 +88,7 @@ fun HomeScreen(onOpenSettings: () -> Unit, viewModel: HomeViewModel = hiltViewMo
         // Two columns of large tiles. Sessions are enabled as their milestones land.
         Tiles.chunked(2).forEach { pair ->
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                pair.forEach { tile -> TileCard(tile, Modifier.weight(1f)) }
+                pair.forEach { tile -> TileCard(tile, onClick = onOpenPackMove.takeIf { tile.title == "Pack / Move" } ?: {}, Modifier.weight(1f)) }
             }
         }
 
@@ -107,17 +107,17 @@ fun HomeScreen(onOpenSettings: () -> Unit, viewModel: HomeViewModel = hiltViewMo
 }
 
 @Composable
-private fun TileCard(tile: Tile, modifier: Modifier = Modifier) {
+private fun TileCard(tile: Tile, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Card(
-        onClick = {},
-        enabled = false, // Sessions arrive in later tasks; the tile shows where they will live.
+        onClick = onClick,
+        enabled = tile.enabled, // Other sessions arrive in later tasks; the tile shows where they will live.
         modifier = modifier.heightIn(min = 112.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(tile.icon, contentDescription = null)
             Text(tile.title, fontSize = 22.sp, style = MaterialTheme.typography.titleLarge)
-            Text("${tile.subtitle} - coming soon", style = MaterialTheme.typography.bodySmall)
+            Text(if (tile.enabled) tile.subtitle else "${tile.subtitle} - coming soon", style = MaterialTheme.typography.bodySmall)
         }
     }
 }

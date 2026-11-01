@@ -24,12 +24,19 @@ data class AppSettings(
     }
 }
 
+/** The settings a scan session needs; an interface so sessions can be tested without Android. */
+interface SessionSettings {
+    val idleTimeoutSec: Int
+}
+
 /** SharedPreferences-backed so the server URL can be read synchronously when the DI graph is built. */
 @Singleton
-class SettingsRepository @Inject constructor(@ApplicationContext context: Context) {
+class SettingsRepository @Inject constructor(@ApplicationContext context: Context) : SessionSettings {
     private val prefs = context.getSharedPreferences("settings", Context.MODE_PRIVATE)
     private val _settings = MutableStateFlow(read())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
+
+    override val idleTimeoutSec: Int get() = _settings.value.idleTimeoutSec
 
     val effectiveServerUrl: String get() = _settings.value.serverUrl ?: BuildConfig.SUPABASE_URL
 

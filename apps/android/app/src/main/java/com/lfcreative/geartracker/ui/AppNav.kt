@@ -21,12 +21,14 @@ import androidx.navigation.compose.rememberNavController
 import com.lfcreative.geartracker.data.auth.AuthState
 import com.lfcreative.geartracker.ui.home.HomeScreen
 import com.lfcreative.geartracker.ui.login.LoginScreen
+import com.lfcreative.geartracker.ui.session.PackMoveScreen
 import com.lfcreative.geartracker.ui.settings.SettingsScreen
 
 object Routes {
     const val LOGIN = "login"
     const val HOME = "home"
     const val SETTINGS = "settings"
+    const val PACK_MOVE = "pack_move"
 }
 
 @Composable
@@ -52,7 +54,13 @@ fun AppNav(viewModel: MainViewModel = hiltViewModel()) {
     Box(Modifier.fillMaxSize()) {
         NavHost(navController = navController, startDestination = start) {
             composable(Routes.LOGIN) { LoginScreen() }
-            composable(Routes.HOME) { HomeScreen(onOpenSettings = { navController.navigate(Routes.SETTINGS) }) }
+            composable(Routes.HOME) {
+                HomeScreen(
+                    onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                    onOpenPackMove = { navController.navigate(Routes.PACK_MOVE) },
+                )
+            }
+            composable(Routes.PACK_MOVE) { PackMoveScreen(onBack = { navController.popBackStack() }) }
             composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
         }
         if (BuildConfig.DEBUG) {
