@@ -1,0 +1,17 @@
+name: db
+on:
+  pull_request:
+    paths: ['supabase/**', '.github/workflows/db.yml']
+  push:
+    branches: [main]
+    paths: ['supabase/**']
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - name: Apply migrations from scratch
+        if: hashFiles('supabase/config.toml') != ''
+        run: supabase start && supabase db reset && supabase test db
