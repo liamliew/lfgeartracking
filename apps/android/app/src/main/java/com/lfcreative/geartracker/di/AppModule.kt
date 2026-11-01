@@ -17,6 +17,16 @@ import com.lfcreative.geartracker.feedback.FeedbackPlayer
 import com.lfcreative.geartracker.feedback.FeedbackSink
 import com.lfcreative.geartracker.session.TagResolver
 import com.lfcreative.geartracker.session.TagResolving
+import com.lfcreative.geartracker.sync.EventsApi
+import com.lfcreative.geartracker.sync.MirrorApi
+import com.lfcreative.geartracker.sync.MirrorStore
+import com.lfcreative.geartracker.sync.PrefsSyncStatusStore
+import com.lfcreative.geartracker.sync.RoomMirrorStore
+import com.lfcreative.geartracker.sync.SupabaseEventsApi
+import com.lfcreative.geartracker.sync.SupabaseMirrorApi
+import com.lfcreative.geartracker.sync.SyncScheduler
+import com.lfcreative.geartracker.sync.SyncStatusStore
+import com.lfcreative.geartracker.sync.SyncTrigger
 import java.time.Clock
 import com.lfcreative.geartracker.data.settings.SessionSettings
 import com.lfcreative.geartracker.data.settings.SettingsRepository
@@ -75,4 +85,9 @@ abstract class BindingsModule {
     @Binds abstract fun sessionSettings(impl: SettingsRepository): SessionSettings
     @Binds abstract fun assetApi(impl: SupabaseAssetApi): AssetApi
     @Binds abstract fun wizardMemory(impl: PrefsWizardMemory): WizardMemory
+    @Binds abstract fun eventsApi(impl: SupabaseEventsApi): EventsApi
+    @Binds abstract fun mirrorApi(impl: SupabaseMirrorApi): MirrorApi
+    @Binds abstract fun mirrorStore(impl: RoomMirrorStore): MirrorStore
+    @Binds abstract fun syncStatus(impl: PrefsSyncStatusStore): SyncStatusStore
+    @Binds abstract fun syncTrigger(impl: SyncScheduler): SyncTrigger
 }

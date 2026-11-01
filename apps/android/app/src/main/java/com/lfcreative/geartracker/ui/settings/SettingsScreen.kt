@@ -99,7 +99,15 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         Info("Version", "${s.versionName} (${s.versionCode})")
         Info("Signed in as", s.email ?: "-")
         Info("Waiting to sync", s.pendingEvents.toString())
+        Info("Last sent to the server", formatTime(s.lastPushAt))
+        Info("Offline copy refreshed", formatTime(s.lastMirrorAt))
+        s.syncError?.let { Text("Last sync problem: $it", color = MaterialTheme.colorScheme.error, fontSize = 16.sp) }
+        Button(onClick = viewModel::syncNow, modifier = Modifier.fillMaxWidth().primaryAction()) { Text("Sync now", fontSize = 18.sp) }
         Info("Sync issues", s.rejectedEvents.toString())
+        s.syncIssues.take(10).forEach { e ->
+            Text("${e.type.replace('_', ' ')}: ${e.lastError ?: "rejected"}", fontSize = 16.sp, color = MaterialTheme.colorScheme.error)
+        }
+        if (s.syncIssues.isNotEmpty()) TextButton(onClick = viewModel::clearSyncIssues) { Text("Clear sync issues") }
         Info("Cached tags / assets / locations", "${s.cachedTags} / ${s.cachedAssets} / ${s.cachedLocations}")
         Info("NFC", s.nfcStatus)
         Info("DataWedge profile", "Not configured yet (automatic setup comes in the next update)")
@@ -126,6 +134,9 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         ) { Text("Sign out", fontSize = 18.sp) }
     }
 }
+
+private fun formatTime(millis: Long): String =
+    if (millis <= 0) "never" else java.time.Instant.ofEpochMilli(millis).toString().take(16).replace('T', ' ') + " UTC"
 
 @Composable
 private fun Section(title: String) = Text(title, style = MaterialTheme.typography.titleLarge)

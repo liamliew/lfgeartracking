@@ -31,5 +31,6 @@ developer.android.com (Compose, Room, WorkManager, NfcAdapter.enableReaderMode) 
 ## Environment gotchas
 - Android SDK installed by `.claude/hooks/session-start.sh` (needs `dl.google.com`, `dl-ssl.google.com` allowed).
 - Maven Central rate-limits parallel Gradle downloads (429) through the proxy; the session hook installs `~/.gradle/init.d/central-mirror.gradle.kts` to use Google's Central mirror first.
+- Background work: WorkManager is initialised on demand (`GearTrackerApp` + Hilt worker factory; default initializer removed in the manifest). Details of the sync flow: `docs/sync.md`.
 - No emulator or device in cloud sessions: Android changes are verified by unit tests, lint and the APK build only. Say so in the PR instead of claiming UI was tested.
 - GitHub proxy blocks branch deletion, tag pushes, GraphQL: use `gh api` (REST) instead of `gh pr`.

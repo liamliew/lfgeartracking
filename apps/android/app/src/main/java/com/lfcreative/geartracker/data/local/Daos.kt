@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TagDao {
+    @Query("DELETE FROM tags")
+    suspend fun clear()
+
     @Query("SELECT * FROM tags WHERE value = :value LIMIT 1")
     suspend fun find(value: String): TagEntity?
 
@@ -20,6 +23,9 @@ interface TagDao {
 
 @Dao
 interface AssetDao {
+    @Query("DELETE FROM assets")
+    suspend fun clear()
+
     @Query("SELECT * FROM assets WHERE id = :id LIMIT 1")
     suspend fun find(id: String): AssetEntity?
 
@@ -32,6 +38,9 @@ interface AssetDao {
 
 @Dao
 interface LocationDao {
+    @Query("DELETE FROM locations")
+    suspend fun clear()
+
     @Query("SELECT * FROM locations WHERE id = :id LIMIT 1")
     suspend fun find(id: String): LocationEntity?
 
@@ -44,6 +53,9 @@ interface LocationDao {
 
 @Dao
 interface ProjectDao {
+    @Query("DELETE FROM projects")
+    suspend fun clear()
+
     @Query("SELECT * FROM projects ORDER BY name")
     fun all(): Flow<List<ProjectEntity>>
 
@@ -53,6 +65,9 @@ interface ProjectDao {
 
 @Dao
 interface OpenCheckoutDao {
+    @Query("DELETE FROM open_checkouts")
+    suspend fun clear()
+
     @Query("SELECT * FROM open_checkouts WHERE assetId = :assetId LIMIT 1")
     suspend fun forAsset(assetId: String): OpenCheckoutEntity?
 
@@ -85,4 +100,14 @@ interface OutboxDao {
 
     @Query("UPDATE outbox_events SET attempts = attempts + 1, lastError = :error WHERE id IN (:ids)")
     suspend fun recordFailure(ids: List<String>, error: String)
+
+    @Query("SELECT * FROM outbox_events WHERE state = 'REJECTED' ORDER BY occurredAt DESC")
+    fun rejected(): Flow<List<OutboxEventEntity>>
+
+    @Query("DELETE FROM outbox_events WHERE state = 'REJECTED'")
+    suspend fun clearRejected()
+
+    /** Sent events are only kept briefly, as a debugging aid. */
+    @Query("DELETE FROM outbox_events WHERE state = 'SENT' AND createdAt < :beforeMillis")
+    suspend fun purgeSent(beforeMillis: Long)
 }

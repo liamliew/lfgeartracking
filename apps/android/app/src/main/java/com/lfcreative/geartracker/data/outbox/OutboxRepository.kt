@@ -2,6 +2,7 @@ package com.lfcreative.geartracker.data.outbox
 
 import com.lfcreative.geartracker.data.local.OutboxDao
 import com.lfcreative.geartracker.data.local.OutboxEventEntity
+import com.lfcreative.geartracker.sync.SyncTrigger
 import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
@@ -21,9 +22,12 @@ interface EventOutbox {
  * The sync worker (task 7) drains it.
  */
 @Singleton
-class OutboxRepository @Inject constructor(private val dao: OutboxDao) : EventOutbox {
+class OutboxRepository @Inject constructor(private val dao: OutboxDao, private val sync: SyncTrigger) : EventOutbox {
     val pendingCount: Flow<Int> = dao.pendingCount()
     val rejectedCount: Flow<Int> = dao.rejectedCount()
+    val rejected: Flow<List<OutboxEventEntity>> = dao.rejected()
+
+    suspend fun clearRejected() = dao.clearRejected()
 
     /** [fields] are the event fields besides id/type/occurred_at (asset_id, to_location_id, payload, ...). */
     override suspend fun enqueue(
@@ -47,6 +51,7 @@ class OutboxRepository @Inject constructor(private val dao: OutboxDao) : EventOu
                 createdAt = System.currentTimeMillis(),
             ),
         )
+        sync.requestSync()
         return id
     }
 }
