@@ -60,6 +60,9 @@ A container checkout does not cascade on the server: the app expands a container
 Input: `{id?, name, category_id?, manufacturer?, model?, serial_number?, is_container?, tag?{value,kind}, location_id?, home_location_id?, asset_code?, custom?, notes?, occurred_at?, device_id?}`.
 Output `status`: `created` | `duplicate` (same `id`) | `rejected` with `reason` `tag_in_use` (plus `existing`, so the wizard can show that asset), `asset_code_in_use`, `location_not_found`. Creates the asset, tag, `created` / `tag_assigned` / `placed_in_location` events atomically. A barcode tag shaped like `A000900` / `C000045` becomes the asset code (pre-printed label sheets).
 
+### `get_asset_detail(p_asset uuid) -> jsonb`
+One call for the Asset Detail screen: `found`, `asset`, `location` (derived path), `container_chain` (outermost first), `last_seen`, `open_checkout`, `tags` (printed-code tag first), `photos`, and the latest 50 `events` with who and where.
+
 ### `search_assets(p_query text, p_limit int = 50) -> setof assets`
 Security invoker (RLS applies). Exact code or tag, full text, trigram on name and serial, substring. Excludes retired assets.
 
@@ -82,6 +85,6 @@ New users are `viewer`. Promote the first admin once in the SQL editor:
 `update public.profiles set role = 'admin' where id = '<auth user id>';`
 
 ## Not done yet (tracked)
-- Storage bucket and policies for photos (task 6).
+- Storage bucket, policies and the photo capture/upload flow (follow-up to task 6).
 - `legacy_id_map` table (task 8).
 - `packages/shared-types` generation (needs a running local stack).
