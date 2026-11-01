@@ -8,7 +8,7 @@ Full spec: `docs/plan.md`. If official docs contradict it, follow the docs and r
 - **Event**: append-only, client-generated UUID. **Projection**: current-state columns derived from events.
 
 ## Commands
-- Android (`apps/android`): `./gradlew testDebugUnitTest lintDebug assembleDebug`
+- Android (`apps/android`): `./gradlew testDebugUnitTest lintDebug assembleDebug` (setup and backend config: `apps/android/README.md`; version pins and why: `docs/adr/0002-android-toolchain.md`, bump libraries together, not one at a time)
 - Web (`apps/web`): `npm run typecheck && npm run lint && npm test && npm run build`
 - DB: `supabase start && supabase db reset && supabase test db` (migrations must apply from scratch); pgTAP in `supabase/tests`
 - DB without Docker (cloud sessions): `scripts/db/test-local.sh` (needs `postgresql-16`, `postgresql-16-pgtap`; see ADR 0001). CI is the source of truth.
@@ -30,4 +30,6 @@ developer.android.com (Compose, Room, WorkManager, NfcAdapter.enableReaderMode) 
 
 ## Environment gotchas
 - Android SDK installed by `.claude/hooks/session-start.sh` (needs `dl.google.com`, `dl-ssl.google.com` allowed).
+- Maven Central rate-limits parallel Gradle downloads (429) through the proxy; the session hook installs `~/.gradle/init.d/central-mirror.gradle.kts` to use Google's Central mirror first.
+- No emulator or device in cloud sessions: Android changes are verified by unit tests, lint and the APK build only. Say so in the PR instead of claiming UI was tested.
 - GitHub proxy blocks branch deletion, tag pushes, GraphQL: use `gh api` (REST) instead of `gh pr`.
