@@ -32,13 +32,18 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.text.KeyboardOptions
+import com.lfcreative.geartracker.core.scan.ScanOutcome
 import com.lfcreative.geartracker.data.settings.AppSettings
+import com.lfcreative.geartracker.ui.scan.ScanInputEffect
+import androidx.compose.material3.TextButton
 import com.lfcreative.geartracker.ui.theme.MinTouch
 import com.lfcreative.geartracker.ui.theme.primaryAction
 
 @Composable
 fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewModel()) {
     val s by viewModel.state.collectAsStateWithLifecycle()
+    // Diagnostics is a scan screen: it listens while resumed so the scanner and NFC can be tested here.
+    ScanInputEffect(viewModel::submitScan)
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -97,7 +102,21 @@ fun SettingsScreen(onBack: () -> Unit, viewModel: SettingsViewModel = hiltViewMo
         Info("Sync issues", s.rejectedEvents.toString())
         Info("Cached tags / assets / locations", "${s.cachedTags} / ${s.cachedAssets} / ${s.cachedLocations}")
         Info("NFC", s.nfcStatus)
-        Info("DataWedge", "Not checked yet (added with the scanner integration)")
+        Info("DataWedge profile", "Not configured yet (automatic setup comes in the next update)")
+
+        HorizontalDivider()
+        Section("Scanner test")
+        Text("Scan a barcode or tap an NFC tag. Same code within 1.5 s is ignored.")
+        if (s.scanLog.isEmpty()) Text("Nothing scanned yet", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        s.scanLog.take(10).forEach { e ->
+            val label = when (e.outcome) {
+                ScanOutcome.ACCEPTED -> "OK"
+                ScanOutcome.DEBOUNCED -> "IGNORED (repeat)"
+                ScanOutcome.EMPTY -> "IGNORED (empty or invalid)"
+            }
+            Text("$label  ${e.input.source}  ${e.input.symbology ?: "-"}  ${e.input.value}", fontSize = 16.sp)
+        }
+        if (s.scanLog.isNotEmpty()) TextButton(onClick = viewModel::clearScanLog) { Text("Clear") }
 
         HorizontalDivider()
         Button(

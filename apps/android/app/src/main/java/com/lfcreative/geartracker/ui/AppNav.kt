@@ -2,6 +2,11 @@ package com.lfcreative.geartracker.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.ui.unit.dp
+import com.lfcreative.geartracker.BuildConfig
+import com.lfcreative.geartracker.ui.debug.DebugScanFab
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,9 +49,17 @@ fun AppNav(viewModel: MainViewModel = hiltViewModel()) {
         }
     }
 
-    NavHost(navController = navController, startDestination = start) {
-        composable(Routes.LOGIN) { LoginScreen() }
-        composable(Routes.HOME) { HomeScreen(onOpenSettings = { navController.navigate(Routes.SETTINGS) }) }
-        composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
+    Box(Modifier.fillMaxSize()) {
+        NavHost(navController = navController, startDestination = start) {
+            composable(Routes.LOGIN) { LoginScreen() }
+            composable(Routes.HOME) { HomeScreen(onOpenSettings = { navController.navigate(Routes.SETTINGS) }) }
+            composable(Routes.SETTINGS) { SettingsScreen(onBack = { navController.popBackStack() }) }
+        }
+        if (BuildConfig.DEBUG) {
+            DebugScanFab(
+                onScan = viewModel::submitScan,
+                modifier = Modifier.align(Alignment.BottomEnd).safeDrawingPadding().padding(16.dp),
+            )
+        }
     }
 }

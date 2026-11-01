@@ -5,7 +5,10 @@ import android.nfc.NfcAdapter
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lfcreative.geartracker.BuildConfig
+import com.lfcreative.geartracker.core.ScanInput
 import com.lfcreative.geartracker.core.ServerUrl
+import com.lfcreative.geartracker.core.scan.ScanInputBus
+import com.lfcreative.geartracker.core.scan.ScanLogEntry
 import com.lfcreative.geartracker.data.auth.AuthRepository
 import com.lfcreative.geartracker.data.auth.AuthState
 import com.lfcreative.geartracker.data.local.AssetDao
@@ -37,6 +40,7 @@ data class SettingsUiState(
     val cachedAssets: Int = 0,
     val cachedLocations: Int = 0,
     val nfcStatus: String = "",
+    val scanLog: List<ScanLogEntry> = emptyList(),
     val anonKeyConfigured: Boolean = true,
     val versionName: String = BuildConfig.VERSION_NAME,
     val versionCode: Int = BuildConfig.VERSION_CODE,
@@ -47,6 +51,7 @@ class SettingsViewModel @Inject constructor(
     @param:ApplicationContext private val context: Context,
     private val settingsRepository: SettingsRepository,
     private val auth: AuthRepository,
+    private val bus: ScanInputBus,
     outbox: OutboxRepository,
     tags: TagDao,
     assets: AssetDao,
@@ -62,8 +67,8 @@ class SettingsViewModel @Inject constructor(
     ) { p, r, t, a, l -> Counts(p, r, t, a, l) }
 
     val state: StateFlow<SettingsUiState> = combine(
-        settingsRepository.settings, auth.state, counts, urlEdit,
-    ) { settings, authState, c, edit ->
+        settingsRepository.settings, auth.state, counts, urlEdit, bus.log,
+    ) { settings, authState, c, edit, scanLog ->
         SettingsUiState(
             settings = settings,
             effectiveServerUrl = settingsRepository.effectiveServerUrl,
@@ -76,6 +81,7 @@ class SettingsViewModel @Inject constructor(
             cachedAssets = c.assets,
             cachedLocations = c.locations,
             nfcStatus = nfcStatus(),
+            scanLog = scanLog,
             anonKeyConfigured = BuildConfig.SUPABASE_ANON_KEY.isNotBlank(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
@@ -98,6 +104,12 @@ class SettingsViewModel @Inject constructor(
             onFailure = { urlEdit.value = input to it.message },
         )
     }
+
+    fun submitScan(input: ScanInput) {
+        bus.submit(input)
+    }
+
+    fun clearScanLog() = bus.clearLog()
 
     fun setIdleTimeout(seconds: Int) = settingsRepository.setIdleTimeoutSec(seconds)
     fun setSound(enabled: Boolean) = settingsRepository.setSoundEnabled(enabled)
