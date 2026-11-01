@@ -1,10 +1,10 @@
 name: db
 on:
   pull_request:
-    paths: ['supabase/**', '.github/workflows/db.yml']
+    paths: ['supabase/**', 'scripts/legacy/**', '.github/workflows/db.yml']
   push:
     branches: [main]
-    paths: ['supabase/**']
+    paths: ['supabase/**', 'scripts/legacy/**']
 jobs:
   migrations:
     runs-on: ubuntu-latest
@@ -15,3 +15,14 @@ jobs:
       - name: Apply migrations from scratch
         if: hashFiles('supabase/config.toml') != ''
         run: supabase start && supabase db reset && supabase test db
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: scripts/legacy/package-lock.json
+      # The importer's integration tests run against the freshly reset local stack (real migrations + seed).
+      - name: Legacy importer (typecheck, unit and database tests)
+        working-directory: scripts/legacy
+        env:
+          LEGACY_TEST_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: npm ci && npm run typecheck && npm test

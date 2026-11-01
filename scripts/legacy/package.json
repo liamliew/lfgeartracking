@@ -1,0 +1,22 @@
+{
+  "name": "gear-tracker-legacy-import",
+  "private": true,
+  "type": "module",
+  "description": "One-off import of the legacy inventory export into the new Gear Tracker database",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "import": "tsx src/cli.ts",
+    "fixtures": "tsx src/fixtures-cli.ts"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}

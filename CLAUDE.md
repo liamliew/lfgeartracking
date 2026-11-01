@@ -12,6 +12,7 @@ Full spec: `docs/plan.md`. If official docs contradict it, follow the docs and r
 - Web (`apps/web`): `npm run typecheck && npm run lint && npm test && npm run build`
 - DB: `supabase start && supabase db reset && supabase test db` (migrations must apply from scratch); pgTAP in `supabase/tests`
 - DB without Docker (cloud sessions): `scripts/db/test-local.sh` (needs `postgresql-16`, `postgresql-16-pgtap`; see ADR 0001). CI is the source of truth.
+- Legacy importer (`scripts/legacy`): `npm ci && npm run typecheck && npm test`; with a database: `scripts/legacy/test-local.sh` (throwaway PostgreSQL, no Docker). Runbook and rules: `docs/legacy-migration.md`.
 - Simulate a scan on emulator:
   `adb shell am broadcast -a com.lfcreative.geartracker.SCAN --es com.symbol.datawedge.data_string "A000123" --es com.symbol.datawedge.label_type "LABEL-TYPE-CODE128" -p com.lfcreative.geartracker.debug`
 
@@ -21,6 +22,7 @@ UI -> ViewModel -> UseCase -> Repository -> (Room | Supabase). All inputs (DataW
 ## Rules
 - Never edit an applied migration; add a new one. RLS on every table, and explicit GRANTs (config sets `auto_expose_new_tables = false`; `anon` gets nothing). New functions: `set search_path = ''`, schema-qualify everything, revoke execute from `public, anon`, put helpers in `private`.
 - DB contracts (events, RPC inputs/outputs, RLS matrix): `docs/architecture.md`. pgTAP files must be self-contained (each runs in its own rolled-back transaction).
+- Legacy data: never export or migrate credentials; exports and reports stay out of git (`scripts/legacy/export/`); the importer only writes through a database-owner connection and refuses the legacy project.
 - No secrets in git; no service-role keys; no legacy DB credentials in cloud sessions. Never migrate credentials.
 - One branch + PR per task (summary, docs consulted, test plan, "How to test in Android Studio / on a Zebra").
 - Definition of Done: docs linked, local + CI green, APK artifact, tests, RLS, migrations from scratch, docs/CLAUDE.md updated.
