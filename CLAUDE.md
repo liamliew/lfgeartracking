@@ -10,7 +10,8 @@ Full spec: `docs/plan.md`. If official docs contradict it, follow the docs and r
 ## Commands
 - Android (`apps/android`): `./gradlew testDebugUnitTest lintDebug assembleDebug`
 - Web (`apps/web`): `npm run typecheck && npm run lint && npm test && npm run build`
-- DB: `supabase db reset` (migrations must apply from scratch); pgTAP in `supabase/tests`
+- DB: `supabase start && supabase db reset && supabase test db` (migrations must apply from scratch); pgTAP in `supabase/tests`
+- DB without Docker (cloud sessions): `scripts/db/test-local.sh` (needs `postgresql-16`, `postgresql-16-pgtap`; see ADR 0001). CI is the source of truth.
 - Simulate a scan on emulator:
   `adb shell am broadcast -a com.lfcreative.geartracker.SCAN --es com.symbol.datawedge.data_string "A000123" --es com.symbol.datawedge.label_type "LABEL-TYPE-CODE128" -p com.lfcreative.geartracker.debug`
 
@@ -18,7 +19,8 @@ Full spec: `docs/plan.md`. If official docs contradict it, follow the docs and r
 UI -> ViewModel -> UseCase -> Repository -> (Room | Supabase). All inputs (DataWedge, NFC, Debug, Manual) emit `ScanInput(value, source, symbology, ts)` into ONE Flow. Scan-session state machines are pure Kotlin and table-tested. Crew devices write only via RPCs (`apply_scan_events`, `create_asset`).
 
 ## Rules
-- Never edit an applied migration; add a new one. RLS on every table.
+- Never edit an applied migration; add a new one. RLS on every table, and explicit GRANTs (config sets `auto_expose_new_tables = false`; `anon` gets nothing). New functions: `set search_path = ''`, schema-qualify everything, revoke execute from `public, anon`, put helpers in `private`.
+- DB contracts (events, RPC inputs/outputs, RLS matrix): `docs/architecture.md`. pgTAP files must be self-contained (each runs in its own rolled-back transaction).
 - No secrets in git; no service-role keys; no legacy DB credentials in cloud sessions. Never migrate credentials.
 - One branch + PR per task (summary, docs consulted, test plan, "How to test in Android Studio / on a Zebra").
 - Definition of Done: docs linked, local + CI green, APK artifact, tests, RLS, migrations from scratch, docs/CLAUDE.md updated.
