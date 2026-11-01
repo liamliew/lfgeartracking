@@ -14,7 +14,10 @@ import com.lfcreative.geartracker.data.auth.AuthState
 import com.lfcreative.geartracker.data.local.AssetDao
 import com.lfcreative.geartracker.data.local.LocationDao
 import com.lfcreative.geartracker.data.local.TagDao
+import com.lfcreative.geartracker.data.local.OutboxEventEntity
 import com.lfcreative.geartracker.data.outbox.OutboxRepository
+import com.lfcreative.geartracker.sync.SyncScheduler
+import com.lfcreative.geartracker.sync.SyncStatusStore
 import com.lfcreative.geartracker.data.settings.AppSettings
 import com.lfcreative.geartracker.data.settings.SettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,6 +44,10 @@ data class SettingsUiState(
     val cachedLocations: Int = 0,
     val nfcStatus: String = "",
     val scanLog: List<ScanLogEntry> = emptyList(),
+    val lastPushAt: Long = 0,
+    val lastMirrorAt: Long = 0,
+    val syncError: String? = null,
+    val syncIssues: List<OutboxEventEntity> = emptyList(),
     val anonKeyConfigured: Boolean = true,
     val versionName: String = BuildConfig.VERSION_NAME,
     val versionCode: Int = BuildConfig.VERSION_CODE,
@@ -52,7 +59,9 @@ class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     private val auth: AuthRepository,
     private val bus: ScanInputBus,
-    outbox: OutboxRepository,
+    private val outbox: OutboxRepository,
+    private val syncStatus: SyncStatusStore,
+    private val scheduler: SyncScheduler,
     tags: TagDao,
     assets: AssetDao,
     locations: LocationDao,
@@ -66,7 +75,7 @@ class SettingsViewModel @Inject constructor(
         outbox.pendingCount, outbox.rejectedCount, tags.count(), assets.count(), locations.count(),
     ) { p, r, t, a, l -> Counts(p, r, t, a, l) }
 
-    val state: StateFlow<SettingsUiState> = combine(
+    private val baseState = combine(
         settingsRepository.settings, auth.state, counts, urlEdit, bus.log,
     ) { settings, authState, c, edit, scanLog ->
         SettingsUiState(
@@ -84,6 +93,10 @@ class SettingsViewModel @Inject constructor(
             scanLog = scanLog,
             anonKeyConfigured = BuildConfig.SUPABASE_ANON_KEY.isNotBlank(),
         )
+    }
+
+    val state: StateFlow<SettingsUiState> = combine(baseState, syncStatus.status, outbox.rejected) { base, sync, issues ->
+        base.copy(lastPushAt = sync.lastPushAt, lastMirrorAt = sync.lastMirrorAt, syncError = sync.lastError, syncIssues = issues)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUiState())
 
     fun onServerUrlInput(value: String) = urlEdit.update { value to null }
@@ -110,6 +123,8 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun clearScanLog() = bus.clearLog()
+    fun syncNow() = scheduler.syncNow()
+    fun clearSyncIssues() { viewModelScope.launch { outbox.clearRejected() } }
 
     fun setIdleTimeout(seconds: Int) = settingsRepository.setIdleTimeoutSec(seconds)
     fun setSound(enabled: Boolean) = settingsRepository.setSoundEnabled(enabled)

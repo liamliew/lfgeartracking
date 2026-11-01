@@ -60,6 +60,9 @@ A container checkout does not cascade on the server: the app expands a container
 Input: `{id?, name, category_id?, manufacturer?, model?, serial_number?, is_container?, tag?{value,kind}, location_id?, home_location_id?, asset_code?, custom?, notes?, occurred_at?, device_id?}`.
 Output `status`: `created` | `duplicate` (same `id`) | `rejected` with `reason` `tag_in_use` (plus `existing`, so the wizard can show that asset), `asset_code_in_use`, `location_not_found`. Creates the asset, tag, `created` / `tag_assigned` / `placed_in_location` events atomically. A barcode tag shaped like `A000900` / `C000045` becomes the asset code (pre-printed label sheets).
 
+### `get_open_checkouts() -> table`
+Flat list of open checkout lines for the device's offline copy (asset_id, checkout_id, project_id, reason, due_at, checked_out_at). Security invoker; PostgREST caps responses at 1000 rows, so page with a range.
+
 ### `get_asset_detail(p_asset uuid) -> jsonb`
 One call for the Asset Detail screen: `found`, `asset`, `location` (derived path), `container_chain` (outermost first), `last_seen`, `open_checkout`, `tags` (printed-code tag first), `photos`, and the latest 50 `events` with who and where.
 
