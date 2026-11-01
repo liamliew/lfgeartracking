@@ -15,6 +15,7 @@ Events are truth, tables are projections. Crew devices write only through RPCs; 
 | `scan_sessions`, `asset_events` | events are append-only (trigger + no grants), client UUID primary key |
 | `audits`, `audit_lines` | found / missing / unexpected |
 | `asset_photos`, `projects` | |
+| `legacy_id_map` | legacy row -> new row, written by `scripts/legacy`; admin-readable only |
 
 Views: `asset_effective_location` (recursive, `container_depth`), `overdue_checkout_items`. Both are `security_invoker`.
 
