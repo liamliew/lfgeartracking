@@ -28,6 +28,7 @@ All are callable by `authenticated` only. `apply_scan_events` and `create_asset`
 
 ### `resolve_tag(p_value text) -> jsonb`
 `kind`: `asset` | `container` | `location` | `unknown`. Accepts legacy dash-separated NFC ids (`04-46-88-0A-BF-2A-81`) and lowercase hex. Assets also return `status`, `location` (derived through containers), `container`, `container_depth`, `open_checkout`.
+Since migration `20261101090200`: every known tag also returns `placement {location_id, container_id}` (direct parent, for undo) and `ancestor_ids` (containers above an asset/container, or locations above a location, nearest first), so a device can reject loops instantly.
 
 ### `apply_scan_events(p_events jsonb) -> jsonb`
 Input: array (max 500) of events:

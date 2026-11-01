@@ -11,22 +11,26 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 
+interface EventOutbox {
+    suspend fun enqueue(type: String, fields: JsonObject, occurredAt: Instant, id: UUID = UUID.randomUUID()): UUID
+}
+
 /**
  * Append-only queue of idempotent events. The id is generated here, on the device, so a retry after a
  * lost response can never create a duplicate server-side (apply_scan_events ignores known ids).
  * The sync worker (task 7) drains it.
  */
 @Singleton
-class OutboxRepository @Inject constructor(private val dao: OutboxDao) {
+class OutboxRepository @Inject constructor(private val dao: OutboxDao) : EventOutbox {
     val pendingCount: Flow<Int> = dao.pendingCount()
     val rejectedCount: Flow<Int> = dao.rejectedCount()
 
     /** [fields] are the event fields besides id/type/occurred_at (asset_id, to_location_id, payload, ...). */
-    suspend fun enqueue(
+    override suspend fun enqueue(
         type: String,
         fields: JsonObject,
-        occurredAt: Instant = Instant.now(),
-        id: UUID = UUID.randomUUID(),
+        occurredAt: Instant,
+        id: UUID,
     ): UUID {
         val event = buildJsonObject {
             put("id", JsonPrimitive(id.toString()))
